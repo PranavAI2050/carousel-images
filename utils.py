@@ -4,6 +4,7 @@ from serpapi import GoogleSearch
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from urllib.parse import urljoin
 import mimetypes
 import re
 import json
@@ -191,7 +192,10 @@ def extract_images_with_context(url, driver, valid_extensions=('.jpg', '.jpeg', 
 
             img_tag = bs_imgs[idx]
             alt_text = img_tag.get("alt", "").strip()
-            src = img_tag.get("src", "") or img_tag.get("data-src", "")
+            # src = img_tag.get("src", "") or img_tag.get("data-src", "")
+            raw_src = img_tag.get("src", "") or img_tag.get("data-src", "")
+            src = urljoin(url, raw_src.strip())
+
             src = src.strip()
 
             if not src or not src.lower().endswith(valid_extensions):
