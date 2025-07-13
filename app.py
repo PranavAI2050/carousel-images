@@ -13,12 +13,16 @@ from utils import (
 
 app = Flask(__name__)
 
-@app.route('/generate_content', methods=['POST'])
-def generate_content():
+@app.route('/get_images', methods=['POST'])
+def get_images():
     try:
-        print("[INFO] Received request at /generate_content")
+        print("[INFO] Received request at /get_images")
         data = request.get_json()
         links = data.get('links_to_be_search', [])
+        topic = data.get('topic', '')  # <-- Now accepting topic from input
+
+        print(f"[DEBUG] Topic: {topic}")
+        print(f"[DEBUG] Links received: {len(links)}")
 
         # Setup headless browser
         options = Options()
@@ -28,19 +32,19 @@ def generate_content():
         driver = webdriver.Chrome(options=options)
         print("[INFO] Headless Chrome driver initialized")
 
-        # Prepare fake results_list format if needed by util
+        # Prepare results_list (if required by your util)
         results_list = [{'title': 'User Link', 'link': link} for link in links]
 
         # Collect images
         final_images = collect_valid_images_from_links(links, results_list, driver)
         print(f"[INFO] Collected {len(final_images)} images")
 
-        # Convert to LLM-friendly strings and get image URLs
+        # Convert image objects into descriptions and links
         desc_strings, img_links = convert_images_to_llm_strings(final_images)
 
         # Run LLM-based filtering
         chunks = chunk_descriptions(desc_strings)
-        evaluated = evaluate_chunks_with_llm(chunks, topic=None)  # topic optional
+        evaluated = evaluate_chunks_with_llm(chunks, topic=topic)  # <-- Topic used here
         top_images = filter_top_images(evaluated, img_links)
         print(f"[INFO] Filtered down to {len(top_images)} top images")
 
